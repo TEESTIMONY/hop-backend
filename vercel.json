@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "name": "hop-bunny-backend",
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/api/leaderboard",
+      "dest": "/api/leaderboard/index.js"
+    },
+    {
+      "src": "/api/user-profile",
+      "dest": "/api/user-profile/index.js"
+    },
+    {
+      "src": "/api/login",
+      "dest": "/api/login.js"
+    },
+    {
+      "src": "/api/register",
+      "dest": "/api/register.js"
+    },
+    {
+      "src": "/api/update-score",
+      "dest": "/api/update-score.js"
+    },
+    {
+      "src": "/api/users",
+      "dest": "/api/users.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+} 
