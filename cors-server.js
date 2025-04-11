@@ -1,6 +1,6 @@
 // Simple Express server to handle POST requests and add CORS headers
 // This is a simplified version of server.js that you can run locally
-// hello
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');

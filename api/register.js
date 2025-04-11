@@ -1,6 +1,5 @@
 // API endpoint for user registration
 const firebase = require('firebase-admin');
-const corsMiddleware = require('./middleware/cors');
 
 // Check if Firebase is already initialized to avoid multiple initializations
 if (!firebase.apps.length) {
@@ -18,26 +17,25 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 module.exports = async (req, res) => {
-  // Apply CORS middleware
-  corsMiddleware(req, res, () => {
-    // This is the "next" function that will be called after CORS headers are set
-    // Only continue if it's not an OPTIONS request (which is already handled by the middleware)
-    if (req.method === 'OPTIONS') return;
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-    // Only allow POST methods
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed. Please use POST.' });
-    }
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
 
-    // Process the request
-    processRegisterRequest(req, res);
-  });
-};
+  // Only allow POST methods
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed. Please use POST.' });
+  }
 
-// Separate function to process the registration request
-async function processRegisterRequest(req, res) {
   try {
-    const { email, password, username } = req.body;
+    const { email, password, username, referrerId, referrerUsername } = req.body;
 
     // Validate input
     if (!email || !password || !username) {
@@ -57,13 +55,65 @@ async function processRegisterRequest(req, res) {
       email,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       highScore: 0,
-      gamesPlayed: 0
+      gamesPlayed: 0,
+      referralCount: 0,  // Initialize referral count
+      referrals: [],     // Initialize empty array of referrals
+      referredBy: referrerId || null,  // Track who referred this user
+      referredByUsername: referrerUsername || null  // Store the username of the referrer
     });
 
-    return res.status(201).json({ 
+    // Prepare the response
+    const responseData = {
       message: 'User registered successfully',
       userId: userRecord.uid
-    });
+    };
+
+    // If this user was referred by someone, update the referrer's stats
+    if (referrerId && referrerUsername) {
+      try {
+        // Get a reference to the referrer's document
+        const referrerRef = db.collection('users').doc(referrerId);
+        
+        // Use a transaction to safely update the referral count and list
+        const referralResult = await db.runTransaction(async (transaction) => {
+          const referrerDoc = await transaction.get(referrerRef);
+          
+          if (!referrerDoc.exists) {
+            return { success: false, message: 'Referrer user does not exist' };
+          }
+          
+          const referrerData = referrerDoc.data();
+          
+          // Initialize referral fields if they don't exist
+          const referrals = referrerData.referrals || [];
+          const referralCount = referrerData.referralCount || 0;
+          
+          // Update the referrer document with incremented count and new username
+          transaction.update(referrerRef, {
+            referralCount: referralCount + 1,
+            referrals: [...referrals, username],
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          
+          return { 
+            success: true, 
+            newCount: referralCount + 1,
+            message: 'Referral count updated successfully' 
+          };
+        });
+        
+        // Add referral info to the response
+        responseData.referralUpdated = referralResult.success;
+        responseData.referralMessage = referralResult.message;
+        
+      } catch (referralError) {
+        console.error('Error updating referral count:', referralError);
+        responseData.referralUpdated = false;
+        responseData.referralMessage = 'Failed to update referral count';
+      }
+    }
+
+    return res.status(201).json(responseData);
   } catch (error) {
     console.error('Error registering new user:', error);
     return res.status(500).json({ 
@@ -71,4 +121,4 @@ async function processRegisterRequest(req, res) {
       message: error.message 
     });
   }
-} 
+}; 
