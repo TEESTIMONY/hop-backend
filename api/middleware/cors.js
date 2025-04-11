@@ -1,25 +1,23 @@
-// CORS middleware for API endpoints
-const allowCors = (handler) => async (req, res) => {
+/**
+ * CORS middleware for all API endpoints
+ */
+module.exports = (req, res, next) => {
+  // Get the origin header or default to '*'
+  const origin = req.headers.origin;
+  
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*');
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET,OPTIONS,PATCH,DELETE,POST,PUT'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 
-  // Handle preflight OPTIONS request
+  // Handle OPTIONS method
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
-
-  // Call the original handler
-  return await handler(req, res);
-};
-
-module.exports = allowCors; 
+  
+  // Move to the next middleware/function
+  if (typeof next === 'function') {
+    next();
+  }
+}; 

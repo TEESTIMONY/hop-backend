@@ -1,5 +1,6 @@
 // API endpoint for user login
 const firebase = require('firebase-admin');
+const corsMiddleware = require('./middleware/cors');
 
 // Check if Firebase is already initialized to avoid multiple initializations
 if (!firebase.apps.length) {
@@ -17,32 +18,30 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 module.exports = async (req, res) => {
-  // Get the origin from request headers
-  const origin = req.headers.origin || '*';
-  
-  // Enable CORS - allow the specific origin
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+  // Apply CORS middleware
+  corsMiddleware(req, res, () => {
+    // This is the "next" function that will be called after CORS headers are set
+    // Only continue if it's not an OPTIONS request (which is already handled by the middleware)
+    if (req.method === 'OPTIONS') return;
 
-  // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+    // Only allow POST methods
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed. Please use POST.' });
+    }
 
-  // Only allow POST methods
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed. Please use POST.' });
-  }
+    // Process the request
+    processLoginRequest(req, res);
+  });
+};
 
+// Separate function to process the login request
+async function processLoginRequest(req, res) {
   try {
     const { email, password } = req.body;
 
     // Validate input
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required....' });
+      return res.status(400).json({ error: 'Email and password are required.' });
     }
 
     // This endpoint can't directly sign in users with email/password as that's not supported by the Admin SDK
@@ -79,4 +78,4 @@ module.exports = async (req, res) => {
       message: error.message
     });
   }
-}; 
+} 
