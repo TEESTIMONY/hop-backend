@@ -18,20 +18,10 @@ const auth = firebase.auth();
 
 module.exports = async (req, res) => {
   // Enable CORS
-  const origin = req.headers.origin;
-  
-  // Accept requests from localhost during development and your deployed frontend in production
-  const allowedOrigins = ['http://127.0.0.1:5500', 'http://localhost:5500', 'https://hop-bunny.vercel.app'];
-  
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // For any other origin, allow it during development
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  
+  res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
 
   // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
