@@ -17,35 +17,14 @@
       ]
     }
   ],
-  "routes": [
-    {
-      "src": "/api",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/api/leaderboard",
-      "dest": "/api/leaderboard/index.js"
-    },
-    {
-      "src": "/api/user-profile",
-      "dest": "/api/user-profile/index.js"
-    },
-    {
-      "src": "/api/login",
-      "dest": "/api/login.js"
-    },
-    {
-      "src": "/api/register",
-      "dest": "/api/register.js"
-    },
-    {
-      "src": "/api/update-score",
-      "dest": "/api/update-score.js"
-    },
-    {
-      "src": "/api/users",
-      "dest": "/api/users.js"
-    }
+  "rewrites": [
+    { "source": "/api", "destination": "/api/index.js" },
+    { "source": "/api/leaderboard", "destination": "/api/leaderboard/index.js" },
+    { "source": "/api/user-profile", "destination": "/api/user-profile/index.js" },
+    { "source": "/api/login", "destination": "/api/login.js" },
+    { "source": "/api/register", "destination": "/api/register.js" },
+    { "source": "/api/update-score", "destination": "/api/update-score.js" },
+    { "source": "/api/users", "destination": "/api/users.js" }
   ],
   "env": {
     "NODE_ENV": "production"
